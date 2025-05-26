@@ -65,49 +65,28 @@ const authenticate = async (req, res, next) => {
 };
 
 // API Routes
-// --------------- ADD USERS ---------------
-app.post(
-  "/api/users",
-  [
-    body("surname").isString().notEmpty(),
-    body("firstname").isString().notEmpty(),
-    body("email").isEmail(),
-    body("phone").isString().notEmpty(),
-    body("user_id").isString().notEmpty(),
-  ],
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    try {
-      // console.log("Received request body:", req.body); //for testing
-      const { surname, firstname, email, phone, user_id } = req.body;
-      if (!surname || !firstname || !email || !phone || !user_id) {
-        console.log(req);
-        return res.status(400).json({ error: "One of the data is not captured!" });
-      }
-      const userRef = doc(db, "users", user_id); //Create doc
-      const docRef = await setDoc(userRef, { 
-        uid: user_id,
-        email: email,
-        surname: surname,
-        firstname: firstname,
-        phone: phone,
-        org_status: 'false',
-        createdAt: new Date(),
-       });
-      res.status(201).json({ id: userRef.id, surname, firstname, email, phone });
-    } catch (error) {
-      console.error("Error Adding User:", error);
-      res.status(500).json({ error: "Failed to Add User to database", details: error.message });
-    }
+// --------------- SEND MESSAGE ---------------
+app.post("/api/message", async (req, res) => {
+  const { id, to_user_id, from_user_id, text, timestamp, status } = req.body;
+  if (!id || !to_user_id || !from_user_id || !text || !timestamp || !status) {
+    return res.status(400).json({ error: "Missing required fields." });
   }
-);
-
-
-// --------------- SEND MESSAGES ---------------
-
+  try {
+    await setDoc(doc(collection(db, "messages"), id), {
+      id,
+      to_user_id,
+      from_user_id,
+      text,
+      timestamp,
+      status,
+    });
+    console.log("Message stored successfully:", { id, to_user_id, from_user_id, text, timestamp, status });
+    res.status(201).json({ message: "Message stored successfully." });
+  } catch (error) {
+    console.error("Error storing message:", error);
+    res.status(500).json({ error: "Failed to store message." });
+  }
+});
 
 
   // ----------------- ADD COMPAINTS ---------------------
