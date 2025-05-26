@@ -2,18 +2,17 @@ import express from "express";
 import cors from "cors";
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, query, where } from "firebase/firestore";
-import { getAuth } from 'firebase/auth' //Authentication with firebase
 import dotenv from "dotenv";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { body, validationResult } from 'express-validator';
 
 dotenv.config()
 
-if (!process.env.PAYSTACK_PUBLIC_KEY) {
-  throw new Error("PAYSTACK_API_KEY is not defined in the environment variables.");
-}
+// CHECK FOR API KEY AVAILABILITY
+// if (!process.env.PAYSTACK_PUBLIC_KEY) {
+//   throw new Error("PAYSTACK_API_KEY is not defined in the environment variables.");
+// }
 
 const app = express();
 app.use(express.json());
@@ -43,7 +42,6 @@ const appinit = initializeApp(firebaseConfig);
 
 // Initialize Firestore and Auth
 const db = getFirestore(appinit);
-const auth = getAuth()
 
 // Collection reference for USERS
 const colRef = collection(db, "users");
