@@ -91,6 +91,32 @@ app.post("/api/message", async (req, res) => {
 });
 
 
+// GET USERS (all users except current user)
+app.get('/api/contacts/:uid', async (req, res) => {
+  const { uid } = req.params;
+  try {
+    const usersRef = collection(db, 'users');
+    // Use the where clause to exclude the current user by uid
+    const q = query(usersRef, where('uid', '!=', uid));
+    const snapshot = await getDocs(q);
+    const contacts = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      contacts.push({
+        id: doc.id,
+        name: `${data.firstname || ''} ${data.surname || ''}`.trim(),
+        email: data.email || '',
+        avatar: data.avatar || ''
+      });
+    });
+    res.json(contacts);
+  } catch (error) {
+    console.error('Error fetching contacts:', error);
+    res.status(500).json({ error: 'Failed to fetch contacts.' });
+  }
+});
+
+
 // GET USER
 app.get('/api/user/:id', async (req, res) => {
   const { id } = req.params;
