@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, query, where } from "firebase/firestore";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, updateDoc, setDoc, query, where, getDoc } from "firebase/firestore";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -79,6 +79,8 @@ app.post("/api/message", async (req, res) => {
       text,
       timestamp,
       status,
+      unread: true,
+      createdAt: new Date(),
     });
     console.log("Message stored successfully:", { id, to_user_id, from_user_id, text, timestamp, status });
     res.status(201).json({ message: "Message stored successfully." });
@@ -88,6 +90,48 @@ app.post("/api/message", async (req, res) => {
   }
 });
 
+
+// GET USER
+app.get('/api/user/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const userRef = doc(db, 'users', id);
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      res.json({ id: userDoc.id, ...userDoc.data() });
+    } else {
+      res.status(404).json({ error: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Failed to fetch user.' });
+  }
+});
+
+
+// --------------- GET CONTACTS ---------------
+app.get('/api/contacts/:uid', async (req, res) => {
+  const { uid } = req.params;
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('uid', '!=', uid));
+    const snapshot = await getDocs(q);
+    const contacts = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      contacts.push({
+        id: doc.id,
+        firstname: data.firstname || '',
+        surname: data.surname || '',
+        email: data.email || ''
+      });
+    });
+    console.log("Contacts fetched successfully:", contacts);
+    res.json(contacts);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch contacts.' });
+  }
+});
 
   // ----------------- ADD COMPAINTS ---------------------
     app.post('/api/support', async (req, res) => {
@@ -113,4 +157,3 @@ app.post("/api/message", async (req, res) => {
 
   // Start the server
   app.listen(4000, () => console.log("Listening on Port 4000"));
-  
